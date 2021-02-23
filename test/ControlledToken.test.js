@@ -1,6 +1,6 @@
 const { expect } = require("chai");
 const hardhat = require('hardhat')
-const { deployMockContract } = require('./helpers/deployMockContract')
+const { deployMockContract } = require('ethereum-waffle')
 
 const toWei = ethers.utils.parseEther
 
