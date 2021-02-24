@@ -10,6 +10,7 @@ import "@openzeppelin/contracts-upgradeable/introspection/ERC165CheckerUpgradeab
 import "@openzeppelin/contracts-upgradeable/token/ERC20/SafeERC20Upgradeable.sol";
 
 import "@pooltogether/fixed-point/contracts/FixedPoint.sol";
+import "../external/sablier/ISablier.sol";
 import "../registry/RegistryInterface.sol";
 import "../reserve/ReserveInterface.sol";
 import "./YieldSource.sol";
@@ -1040,6 +1041,11 @@ abstract contract PrizePool is PrizePoolInterface, YieldSource, OwnableUpgradeab
   /// @return The current total of all tokens and timelock.
   function accountedBalance() external override view returns (uint256) {
     return _tokenTotalSupply();
+  }
+
+  /// @notice Withdraws from a Sablier stream to this contract.  The contract should be the recipient for the passed stream id.
+  function sablierWithdrawFromStream(ISablier sablier, uint256 streamId, uint256 amount) external {
+    require(sablier.withdrawFromStream(streamId, amount), "PrizePool/sablier-withdraw-failed");
   }
 
   /// @notice The total of all controlled tokens and timelock.

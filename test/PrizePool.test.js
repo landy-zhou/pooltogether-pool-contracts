@@ -1,5 +1,5 @@
 
-const { deployMockContract } = require('./helpers/deployMockContract')
+const { deployMockContract } = require('ethereum-waffle')
 
 const { ethers } = require('ethers')
 const { expect } = require('chai')
@@ -27,6 +27,8 @@ describe('PrizePool', function() {
 
   let ticket, sponsorship
 
+  let ISablier
+
   beforeEach(async () => {
     [wallet, wallet2] = await hardhat.ethers.getSigners()
     debug(`using wallet ${wallet.address}`)
@@ -37,6 +39,8 @@ describe('PrizePool', function() {
 
     const IERC721 = await hre.artifacts.readArtifact("IERC721Upgradeable")
     erc721token = await deployMockContract(wallet, IERC721.abi, overrides)
+
+    ISablier = await hre.artifacts.readArtifact("ISablier")
 
     const YieldSourceStub = await hre.artifacts.readArtifact("YieldSourceStub")
     yieldSourceStub = await deployMockContract(wallet, YieldSourceStub.abi, overrides)
@@ -582,6 +586,20 @@ describe('PrizePool', function() {
         expect(await prizePool.timelockBalanceOf(wallet.address)).to.equal(amount)
         expect(await prizePool.timelockBalanceAvailableAt(wallet.address)).to.equal(1 + poolMaxTimelockDuration) // current time + 10000
         expect(await prizePool.timelockTotalSupply()).to.equal(amount)
+      })
+    })
+
+    describe('sablierWithdrawFromStream()', () => {
+      it('should allow the prize pool to withdraw from a stream', async () => {
+        const sablier = await deployMockContract(wallet, ISablier.abi, overrides)
+        await sablier.mock.withdrawFromStream.withArgs(4, toWei('10')).revertsWithReason("hello")
+        await expect(prizePool.sablierWithdrawFromStream(sablier.address, 4, toWei('10'))).to.be.revertedWith('hello')
+      })
+
+      it('should revert if a failure occurs', async () => {
+        const sablier = await deployMockContract(wallet, ISablier.abi, overrides)
+        await sablier.mock.withdrawFromStream.withArgs(4, toWei('10')).returns(false)
+        await expect(prizePool.sablierWithdrawFromStream(sablier.address, 4, toWei('10'))).to.be.revertedWith("PrizePool/sablier-withdraw-failed")
       })
     })
 
